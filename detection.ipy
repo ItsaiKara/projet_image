@@ -1,3 +1,7 @@
+"""
+    This file is used to start the mask detection
+"""
+
 # Import required libraries
 import pandas as pd
 import os, random
@@ -5,11 +9,13 @@ import matplotlib.pyplot as plt
 import glob
 import xml.etree.ElementTree as ET 
 
+#Variables containing path to the input directory 
 input_data = 'dataset'
 
 annotations_path = input_data + "/annotations"
 images_path = input_data + "/images"
 
+# extract the data from the annotation file in XML
 dataset = {
             "file":[],
             "name":[],    
@@ -69,6 +75,7 @@ color_dict = {
     'mask_weared_incorrect':  (0, 0, 255),
     'without_mask': (255, 0, 0) 
 }
+
 
 def show_image(img_id):
     df_image = df[df.file==img_id]

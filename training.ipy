@@ -1,3 +1,4 @@
+#cloning the last version of yolov5
 !rm -rf yolov5
 !git clone https://github.com/ultralytics/yolov5
 %cd yolov5
@@ -16,14 +17,18 @@ import seaborn as sns
 import warnings
 warnings.filterwarnings('ignore')
 
+#Going to the root of our project folder
 os.chdir('../')
 
+#Variables containing path to the input and output direcotry 
 input_data = 'dataset'
 output_data = os.getcwd()
 
+# Path to the anotation and images
 annotations_path = input_data + "/annotations"
 images_path = input_data + "/images"
 
+# extract the data from the annotation file in XML
 dataset = {
             "file":[],
             "name":[],    
@@ -71,20 +76,23 @@ for anno in glob.glob(annotations_path+"/*.xml"):
                             ymax = int(round(float(dim.text)))
                             dataset['ymax']+=[ymax]
 
+#Making the dictionnary a pandas Dataframe and displaying it
 df=pd.DataFrame(dataset)
+#Creating the dict of classes
 name_dict = {
     'with_mask': 0,
     'mask_weared_incorrect': 1,
     'without_mask': 2 
 }
-
 df['class'] = df['name'].map(name_dict)
 
 np.sort(df.name.unique())
 
+#Getting the list of all the images
 fileNames = [*os.listdir(images_path)]
 print('There are {} images in the dataset'.format(len(fileNames)))
 
+#Splitting the data in training and testing
 from sklearn.model_selection import train_test_split
 train, test = train_test_split(fileNames, test_size=0.1, random_state=22)
 test, val = train_test_split(test, test_size=0.7, random_state=22)
@@ -108,6 +116,7 @@ os.mkdir('./yolov5/data/val/labels')
 
 from PIL import Image
 
+#Copy all images in the given folder and resize them all
 def copyImages(imageList, folder_Name):
     for image in imageList:
         img = Image.open(input_data+"/images/"+image)
@@ -118,6 +127,7 @@ copyImages(train, "train")
 copyImages(val, "val")
 copyImages(test, "test")
 
+# Change the bounding box coordinates to fit with the previous resizing
 df['xmax'] = (640/df['width'])*df['xmax']
 df['ymax'] = (480/df['height'])*df['ymax']
 df['xmin'] = (640/df['width'])*df['xmin']
@@ -125,6 +135,7 @@ df['ymin'] = (480/df['height'])*df['ymin']
 
 df[['xmax', 'ymax', 'xmin', 'ymin']] = df[['xmax', 'ymax', 'xmin', 'ymin']].astype('int64')
 
+# Changing center, height and width to fit the previous resizing 
 df['x_center'] = (df['xmax']+df['xmin'])/(2*640)
 df['y_center'] = (df['ymax']+df['ymin'])/(2*480)
 df['box_height'] = (df['xmax']-df['xmin'])/(640)
@@ -132,6 +143,7 @@ df['box_width'] = (df['ymax']-df['ymin'])/(480)
 
 df = df.astype('string')
 
+# Getting all the images from a given folder, and making a dataframe of all the labels associated
 def create_labels(image_list, data_name):
     fileNames = [x.split(".")[0] for x in image_list]
 
