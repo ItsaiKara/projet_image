@@ -1,0 +1,107 @@
+# Import required libraries
+import pandas as pd
+import os, random
+import matplotlib.pyplot as plt
+import glob
+import xml.etree.ElementTree as ET 
+
+input_data = 'dataset'
+
+annotations_path = input_data + "/annotations"
+images_path = input_data + "/images"
+
+dataset = {
+            "file":[],
+            "name":[],    
+            "width":[],
+            "height":[],
+            "xmin":[],
+            "ymin":[],   
+            "xmax":[],
+            "ymax":[],
+           }
+
+for anno in glob.glob(annotations_path+"/*.xml"):
+    tree = ET.parse(anno)
+    
+    for elem in tree.iter():
+        if 'size' in elem.tag:
+            for attr in list(elem):
+                if 'width' in attr.tag: 
+                    width = int(round(float(attr.text)))
+                if 'height' in attr.tag:
+                    height = int(round(float(attr.text)))    
+
+        if 'object' in elem.tag:
+            for attr in list(elem):
+                
+                if 'name' in attr.tag:
+                    name = attr.text                 
+                    dataset['name']+=[name]
+                    dataset['width']+=[width]
+                    dataset['height']+=[height] 
+                    dataset['file']+=[anno.split('/')[-1][0:-4]] 
+                            
+                if 'bndbox' in attr.tag:
+                    for dim in list(attr):
+                        if 'xmin' in dim.tag:
+                            xmin = int(round(float(dim.text)))
+                            dataset['xmin']+=[xmin]
+                        if 'ymin' in dim.tag:
+                            ymin = int(round(float(dim.text)))
+                            dataset['ymin']+=[ymin]                                
+                        if 'xmax' in dim.tag:
+                            xmax = int(round(float(dim.text)))
+                            dataset['xmax']+=[xmax]                                
+                        if 'ymax' in dim.tag:
+                            ymax = int(round(float(dim.text)))
+                            dataset['ymax']+=[ymax]
+
+df=pd.DataFrame(dataset)
+
+# go to YOLO directory
+%cd yolov5
+
+!python3 detect.py --source data/test/images/ --weight runs/train/yolov5s_results/weights/best.pt --name expTestImage --conf 0.4
+
+color_dict = {
+    'with_mask': (0, 255, 0),
+    'mask_weared_incorrect':  (0, 0, 255),
+    'without_mask': (255, 0, 0) 
+}
+
+def show_image(img_id):
+    df_image = df[df.file==img_id]
+    df_image[['xmin', 'ymin', 'xmax', 'ymax']] = df_image[['xmin', 'ymin', 'xmax', 'ymax']].astype('int64')
+    path = 'data/test/images/'+img_id# +'.png'
+    img = plt.imread(path)
+
+    imge = img.copy()
+
+    for index in range(len(df_image)):
+        row = df_image.iloc[index]
+        cv2.rectangle(imge, 
+                      (row['xmin'], row['ymin']),
+                      (row['xmax'], row['ymax']),
+                      color=color_dict[row['name']],
+                      thickness=2)
+
+    img_pred = plt.imread('runs/detect/expTestImage/'+img_id)
+    # ===================================
+    plt.figure(figsize=(14,17))
+
+    plt.subplot(1,2,1)
+    plt.imshow(imge)
+    plt.axis('off')
+    plt.title('Image with Truth Box')
+
+    plt.subplot(1,2,2)
+    plt.imshow(img_pred)
+    plt.axis('off')
+    plt.title('Image with Predicted Box')
+
+show_image(random.choice(os.listdir("data/test/images/"))) 
+show_image(random.choice(os.listdir("data/test/images/"))) 
+plt.show()
+
+!python3 detect.py --source 0 --weight runs/train/yolov5s_results/weights/best.pt 
