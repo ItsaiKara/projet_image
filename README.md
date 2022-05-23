@@ -26,3 +26,5 @@ This will launch a face mask detection on the test images of the dataset and the
 Once you've closed the results, it'll then launch a webcam detection for a real time face mask detection on yourself. To stop it, you can simply ctrl + c in your terminal, the result will be saved in `yolov5/runs/detect`
 
 # Weight & Biases results
+Here's the Weights & Biases report on a 100 epochs run : \
+https://wandb.ai/gprebot/YOLOv5/reports/Face-Mask-Detection--VmlldzoyMDUwMzU4?accessToken=4icxj889m3jzxlnr5wj7d5vefzjypgjf6ygux6uq2kfta2wj693l642r3s4420gh 
