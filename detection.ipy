@@ -12,6 +12,7 @@ import xml.etree.ElementTree as ET
 #Variables containing path to the input directory 
 input_data = 'dataset'
 
+# Path to the anotation and images
 annotations_path = input_data + "/annotations"
 images_path = input_data + "/images"
 
@@ -62,21 +63,23 @@ for anno in glob.glob(annotations_path+"/*.xml"):
                         if 'ymax' in dim.tag:
                             ymax = int(round(float(dim.text)))
                             dataset['ymax']+=[ymax]
-
+#Making the dictionnary a pandas Dataframe
 df=pd.DataFrame(dataset)
 
 # go to YOLO directory
 %cd yolov5
 
+#Run the detection using the test set images
 !python3 detect.py --source data/test/images/ --weight runs/train/yolov5s_results/weights/best.pt --name expTestImage --conf 0.4
 
+#Association color to each class
 color_dict = {
     'with_mask': (0, 255, 0),
     'mask_weared_incorrect':  (0, 0, 255),
     'without_mask': (255, 0, 0) 
 }
 
-
+#Function to display images using a given image id (with and without bounding boxes)
 def show_image(img_id):
     df_image = df[df.file==img_id]
     df_image[['xmin', 'ymin', 'xmax', 'ymax']] = df_image[['xmin', 'ymin', 'xmax', 'ymax']].astype('int64')
@@ -111,4 +114,5 @@ show_image(random.choice(os.listdir("data/test/images/")))
 show_image(random.choice(os.listdir("data/test/images/"))) 
 plt.show()
 
+#Run the detection using webcam (smile for the camera :) )
 !python3 detect.py --source 0 --weight runs/train/yolov5s_results/weights/best.pt 
